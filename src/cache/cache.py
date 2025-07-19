@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import struct
 
 
 class AddressViolationError(Exception):
@@ -37,16 +38,16 @@ class FileMainMemory(Memory):
             f.write(self.storage)
 
     def read(self, address):
-        if not 0 <= address < self._size:
-            raise AddressViolationError(f"invalid read address: {address}")
+        if address % 8 != 0 or address + 8 > self._size:
+            raise AddressViolationError(f"invalid address {address}")
 
-        return self.storage[address]
+        return struct.unpack_from("<Q", self.storage, address)[0]
 
     def write(self, data, address):
-        if not 0 <= address < self._size:
-            raise AddressViolationError(f"invalid write address: {address}")
+        if address % 8 != 0 or address + 8 > self._size:
+            raise AddressViolationError(f"invalid address {address}")
 
-        self.storage[address] = data
+        struct.pack_into("<Q", self.storage, address, data)
         with open(self._file_name, "wb") as f:
             f.write(self.storage)
 
